@@ -78,7 +78,7 @@ deployment:
 
         volumeMounts:
           - name: "{{ $.Release.Name }}-config"
-            mountPath: /usr/share/nginx/html
+            mountPath: /usr/share/nginx/html/index.html
             subPath: index.html
 
     autoscaling:

@@ -1,0 +1,147 @@
+# Default values for cloud-database-backend.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+image:
+  repository: hub.paas.vn/public/nginx
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+# imagePullSecrets:
+#   - name: registry
+
+volumes:
+  - name: "{{ $.Release.Name }}-config"
+    configMap:
+      items:
+        - key: "index.html"
+          path: "index.html"
+      name: "{{ $.Release.Name }}-configmap"
+
+service:
+  type: NodePort
+  port: 80
+  nodePort: 30808
+
+# env:
+# - name: ENV
+#   value: staging
+
+Vault:
+  enabled: false
+
+deployment:
+  - name: "{{ $.Release.Name }}"
+    replicaCount: 2
+    nameOverride: ""
+    fullnameOverride: ""
+    podAnnotations: {}
+    podSecurityContext: {}
+    # fsGroup: 2000
+    containers:
+      - 
+        securityContext: {}
+
+        # command:
+        # - bash
+        # - -c
+        # - |
+        #   cd /app/account/backend
+        #   gunicorn -w 2 --threads 2 -b 0.0.0.0:5000 --log-level debug run:app
+
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 200m
+            memory: 200Mi
+
+        # livenessProbe:
+        #   failureThreshold: 3
+        #   httpGet:
+        #     path: /healthcheck
+        #     port: 5000
+        #   initialDelaySeconds: 10
+        #   periodSeconds: 30
+        #   successThreshold: 1
+        #   timeoutSeconds: 3
+
+        # readinessProbe:
+        #   failureThreshold: 3
+        #   httpGet:
+        #     path: /healthcheck
+        #     port: 5000
+        #   initialDelaySeconds: 10
+        #   periodSeconds: 30
+        #   successThreshold: 1
+        #   timeoutSeconds: 3
+
+        volumeMounts:
+          - name: "{{ $.Release.Name }}-config"
+            mountPath: /usr/share/nginx/html
+            subPath: index.html
+
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 100
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+
+ingress:
+  nginx:
+    enabled: false
+    custom: false
+    annotations:
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - host: bizflycloud.vn
+        paths:
+          - path: /
+            backend:
+              # serviceName: "{{ $.Release.Name }}-api"
+              # servicePort: 8000
+
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+  kong:
+    enabled: false
+    custom: false
+    annotations:
+      kubernetes.io/ingress.class: kong
+      konghq.com/override: "{{ $.Release.Name }}"
+    hosts:
+      - host: bizflycloud.vn
+        paths:
+          - path: /s/v1/
+            backend:
+              # serviceName: "{{ $.Release.Name }}-api"
+              # servicePort: 8000
+      - host: staging.bizflycloud.vn
+        paths:
+          - path: /s/v1/
+            backend:
+
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+configmap:
+  index.html: |
+    Hello anh thanh
